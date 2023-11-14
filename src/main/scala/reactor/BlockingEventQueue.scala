@@ -6,7 +6,7 @@ package reactor
 
 import reactor.api.Event
 
-final class BlockingEventQueue[T] (private val capacity: Int) {
+final class BlockingEventQueue[T](private val capacity: Int) {
 
   @throws[InterruptedException]
   def enqueue[U <: T](e: Event[U]): Unit = ???

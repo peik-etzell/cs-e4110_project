@@ -1,6 +1,6 @@
 # Task B - Reactor Pattern
 
-In this task, you must implement a simplified Reactor pattern as described in this section. 
+In this task, you must implement a simplified Reactor pattern as described in this section.
 
 Handles are sources of event data, which the application using a Reactor accepts. It is unkown when, or even if, a Handle will produce an element of data. Hence, it is necessary to read all of the application handles concurrently.
 
@@ -22,11 +22,11 @@ Create a new Dispatcher with no registered Handlers (different Dispatchers are c
 
 Repeatedly wait until an event is received from a registered handle and dispatch these events. Events are dispatched by passing the event data read from `Handle.read()` to the correct, currently registered, event handlers `handleEvent()` method. The event API offers a convenience method `handle()` to do this in a type safe manner. `handleEvents()` returns only when there are no registered handlers.
 
-Polling or busy-waiting for events is not allowed. `handleEvents()` must wait for the next event without assuming anything about when, or even if, the handles will generate events. 
+Polling or busy-waiting for events is not allowed. `handleEvents()` must wait for the next event without assuming anything about when, or even if, the handles will generate events.
 
 > Tip: The reactor pattern logic that finds the next event is often called the `select()` method.
 
-If interrupted by `Thread.interrupt()` (before or during the method invocation), this method must throw an `InterruptedException` or set the thread's interrupt status. 
+If interrupted by `Thread.interrupt()` (before or during the method invocation), this method must throw an `InterruptedException` or set the thread's interrupt status.
 
 Events from a specific handle must be handled in the same order they were read from the handle's `read()` method, i.e. event ordering for each handle must be preserved. Events must not be read by the Reactor from a handle before registration (although the application using it may do so).
 

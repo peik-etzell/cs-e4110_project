@@ -52,11 +52,11 @@ The first line of your submission must be a comment line, with you student numbe
 
 ## Grading
 
-| Points |        |
-| ------ | ------ |
-| 60     | Implemented the API correctly |
-| 15     | Implemented the optional `getAll` method |
-| 15     | Implementation is notification efficient (see below) |
+| Points |                                                            |
+| ------ | ---------------------------------------------------------- |
+| 60     | Implemented the API correctly                              |
+| 15     | Implemented the optional `getAll` method                   |
+| 15     | Implementation is notification efficient (see below)       |
 | 10     | Code comments helpful for understanding the implementation |
 
 ### Efficiency

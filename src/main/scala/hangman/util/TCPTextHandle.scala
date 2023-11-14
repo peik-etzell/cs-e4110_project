@@ -7,11 +7,13 @@ import reactor.api.Handle
 
 class TCPTextHandle(private val socket: Socket) extends Handle[String] {
   require(socket != null)
-  private val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
+  private val in = new BufferedReader(
+    new InputStreamReader(socket.getInputStream)
+  )
   private val out = new PrintStream(socket.getOutputStream)
 
   override def read(): String = {
-    try{
+    try {
       in.readLine()
     } catch {
       case _: IOException => null

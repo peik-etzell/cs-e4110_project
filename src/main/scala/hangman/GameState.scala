@@ -18,9 +18,9 @@ case class GameState(word: String, guessCount: Int, guessChars: Set[Char]) {
   }
 
   def getMaskedWord: String = {
-    word.map{ c =>
+    word.map { c =>
       guessChars.contains(c) match {
-        case true => c
+        case true  => c
         case false => '-'
       }
     }
@@ -28,7 +28,7 @@ case class GameState(word: String, guessCount: Int, guessChars: Set[Char]) {
 
   def makeGuess(guess: Char): GameState = {
     word.contains(guess) match {
-      case true => GameState(word, guessCount, guessChars + guess)
+      case true  => GameState(word, guessCount, guessChars + guess)
       case false => GameState(word, guessCount - 1, guessChars + guess)
     }
   }

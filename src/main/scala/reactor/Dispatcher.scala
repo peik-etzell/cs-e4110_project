@@ -27,4 +27,4 @@ final class WorkerThread[T](???) extends Thread {
  def cancelThread(): Unit = ???
 
 }
-*/
+ */

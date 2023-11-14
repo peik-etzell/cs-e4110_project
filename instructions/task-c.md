@@ -34,13 +34,13 @@ The guessed word is the word to be guessed with unknown characters marked by das
 
 Clients send guesses (at any time) as single lines containing a single lower-case alphabetic character through the TCP connection (extraneous characters and newlines are not allowed; you may ignore them or report an error, for example).
 
-## Usage 
+## Usage
 
 The Hangman servers requires two startup arguments: the word to guess and the positive number of allowed failed guesses. The application must print the server port number to `System.out` so you know what TCP port clients must connect to.
 
 > Example: `sbt "run concurrency 9"` from the command prompt or `run concurrency 9` inside the SBT shell.
 
-Use terminal applications, such as `telnet` and `netcat`, to connect to the Hangman server as a client. 
+Use terminal applications, such as `telnet` and `netcat`, to connect to the Hangman server as a client.
 
 > Tip: Windows 10 users can install a command line `telnet` client via: "Control panel" -> "Turn Windows features on or off" -> Enable "Telnet Client".
 
@@ -56,7 +56,7 @@ Your Hangman must be a single threaded application. All of the concurrenty and t
 
 The game implementation must never directly call `read()` on a handle.
 
-## Examples 
+## Examples
 
 ### Game 1
 
@@ -136,7 +136,7 @@ The first line of your submission must be a comment line, with you student numbe
 
 ## Grading
 
-| Points |  |
-| ------ | ------ |
-| 90 | Implemented the game correctly |
-| 10 | Code comments helpful for understanding the implementation |
+| Points |                                                            |
+| ------ | ---------------------------------------------------------- |
+| 90     | Implemented the game correctly                             |
+| 10     | Code comments helpful for understanding the implementation |

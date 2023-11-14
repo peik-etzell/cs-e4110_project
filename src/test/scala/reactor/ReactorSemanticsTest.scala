@@ -11,7 +11,7 @@ object ReactorSemanticsTest {
 
 class ReactorSemanticsTest extends AnyFunSuite with TimeLimitedTests {
 
-  //The time limit is arbitrary and dependent on the computer
+  // The time limit is arbitrary and dependent on the computer
   override def timeLimit: Span = Span(10, Seconds)
 
   def randomString(n: Int): String = {
@@ -31,7 +31,7 @@ class ReactorSemanticsTest extends AnyFunSuite with TimeLimitedTests {
     val buffer: StringBuilder = new StringBuilder()
 
     def receive(s: String): Unit = {
-      if(s != null) {
+      if (s != null) {
         buffer.append(s)
       } else {
         d.removeHandler(handler)
@@ -48,9 +48,9 @@ class ReactorSemanticsTest extends AnyFunSuite with TimeLimitedTests {
 
     override def read(): String = {
       index match {
-        case x if x < txt.length => { index += 1; "" + txt.charAt(index-1) }
+        case x if x < txt.length  => { index += 1; "" + txt.charAt(index - 1) }
         case x if x == txt.length => { index += 1; null }
-        case x if x > txt.length => fail("handle read after returning null")
+        case x if x > txt.length  => fail("handle read after returning null")
       }
     }
   }
