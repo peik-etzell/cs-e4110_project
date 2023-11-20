@@ -7,9 +7,27 @@ package reactor
 import reactor.api.Event
 import scala.collection.mutable.Queue
 
+class Semaphore(private var permits: Int) {
+
+  def acquire(): Unit = synchronized {
+    while (permits == 0) { wait() }
+    permits -= 1
+  }
+
+  def release(): Unit = synchronized {
+    permits += 1
+    notify()
+  }
+
+  def availablePermits(): Int = synchronized { permits }
+}
+
 final class BlockingEventQueue[T](private val capacity: Int) {
 
   var queue = new Queue[Event[T]]
+  private val emptySlotsSem = new Semaphore(capacity)
+  private val elementsSem = new Semaphore(0)
+  private val mutationLock = new Semaphore(1)
 
   // Note on efficiency: separate full/empty -locks for performance?
 
@@ -17,27 +35,29 @@ final class BlockingEventQueue[T](private val capacity: Int) {
   def enqueue[U <: T](e: Event[U]): Unit = {
     // task-a.md line 43:
     // The event queue may not accept `null` input to `enqueue`, but ...
-    if (e != null) synchronized {
+    if (e != null) {
       // TODO handle exceptions?
-      while (queue.size >= capacity) { wait() }
+      emptySlotsSem.acquire()
+      mutationLock.acquire()
       queue.enqueue(e.asInstanceOf[Event[T]])
-      notifyAll()
+      mutationLock.release()
+      elementsSem.release()
     }
   }
 
   @throws[InterruptedException]
   def dequeue: Event[T] = {
-    synchronized {
-      while (queue.isEmpty) { wait() }
-      notifyAll()
-      queue.dequeue()
-    }
+    elementsSem.acquire()
+    mutationLock.acquire()
+    val e = queue.dequeue()
+    mutationLock.release()
+    emptySlotsSem.release()
+    return e
   }
 
+  // TODO has to incr./decr./dequeue everything
   def getAll: Seq[Event[T]] = {
-    synchronized {
-      queue.dequeueAll(_ => true)
-    }
+    ???
   }
 
   def getSize: Int = { synchronized { queue.size } }

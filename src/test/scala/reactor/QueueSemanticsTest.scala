@@ -5,6 +5,7 @@ import reactor.api.{Event, EventHandler, Handle}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.time.{Seconds, Span}
 
+import scala.util.Random
 class QueueSemanticsTest extends AnyFunSuite with TimeLimitedTests {
 
   // The time limit is arbitrary and dependent on the computer
@@ -75,6 +76,32 @@ class QueueSemanticsTest extends AnyFunSuite with TimeLimitedTests {
     assert(everything(0) === e1)
     assert(everything(1) === e2)
     assert(everything(2) === e3)
+  }
+
+  test("the queue does not hang on random concurrent interaction") {
+    val n_threads = 16
+    val capacity = 3
+    val q = new BlockingEventQueue[Integer](capacity)
+
+    val enqueue = () => { q.enqueue(generateIntegerEvent) }
+    val dequeue = () => { q.dequeue }
+
+    val threads = Random
+      .shuffle(
+        Seq.fill(n_threads / 2)(enqueue) ++ Seq.fill(n_threads / 2)(dequeue)
+      )
+      .map(task =>
+        new Thread {
+          override def run(): Unit = { task() }
+        }
+      )
+
+    threads.foreach(t => t.start())
+    threads.foreach(t => t.join(500))
+    assert(
+      q.getSize == 0,
+      s"the queue should be empty after ${n_threads / 2} enqueues and dequeues"
+    )
   }
 
 }
