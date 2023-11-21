@@ -23,11 +23,15 @@ class Semaphore(private var permits: Int) {
 
   def release(): Unit = synchronized {
     permits += 1
+    // Notify a single waiting thread if such exists, 
+    // no need to wake all of them
     notify()
   }
 
   def releaseMany(n: Int): Unit = synchronized {
     permits += n
+    // Has to notify all waiting threads
+    // (could kind of notify n waiting threads but whatever, good enough)
     notifyAll()
   }
 
@@ -41,14 +45,11 @@ final class BlockingEventQueue[T](private val capacity: Int) {
   private val elementsSem = new Semaphore(0)
   private val mutationLock = new Semaphore(1)
 
-  // Note on efficiency: separate full/empty -locks for performance?
-
   @throws[InterruptedException]
   def enqueue[U <: T](e: Event[U]): Unit = {
     // task-a.md line 43:
     // The event queue may not accept `null` input to `enqueue`, but ...
     if (e != null) {
-      // TODO handle exceptions?
       emptySlotsSem.acquire()
       mutationLock.acquire()
       queue.enqueue(e.asInstanceOf[Event[T]])
