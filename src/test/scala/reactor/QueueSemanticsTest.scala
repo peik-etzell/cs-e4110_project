@@ -5,7 +5,7 @@ import reactor.api.{Event, EventHandler, Handle}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.time.{Seconds, Span}
 
-import scala.util.Random
+import scala.util.Random.shuffle
 class QueueSemanticsTest extends AnyFunSuite with TimeLimitedTests {
 
   // The time limit is arbitrary and dependent on the computer
@@ -79,17 +79,17 @@ class QueueSemanticsTest extends AnyFunSuite with TimeLimitedTests {
   }
 
   test("the queue does not hang on random concurrent interaction") {
-    val n_threads = 16
-    val capacity = 3
+    val numEnqueue = 110
+    val numDequeue = 100
+    val capacity = 20
     val q = new BlockingEventQueue[Integer](capacity)
 
     val enqueue = () => { q.enqueue(generateIntegerEvent) }
     val dequeue = () => { q.dequeue }
 
-    val threads = Random
-      .shuffle(
-        Seq.fill(n_threads / 2)(enqueue) ++ Seq.fill(n_threads / 2)(dequeue)
-      )
+    val threads = shuffle(
+      Seq.fill(numEnqueue)(enqueue) ++ Seq.fill(numDequeue)(dequeue)
+    )
       .map(task =>
         new Thread {
           override def run(): Unit = { task() }
@@ -98,10 +98,30 @@ class QueueSemanticsTest extends AnyFunSuite with TimeLimitedTests {
 
     threads.foreach(t => t.start())
     threads.foreach(t => t.join(500))
+    val expected = numEnqueue - numDequeue
+    assert(q.getSize == expected)
+    threads foreach { t => assert(!t.isAlive()) }
+  }
+
+  test("a getAll call correctly wakes up waiting threads") {
+    val capacity = 5
+    val q = new BlockingEventQueue[Integer](capacity)
+
+    val threads = (0 until 2 * capacity) map { _ =>
+      new Thread { override def run(): Unit = q.enqueue(generateIntegerEvent) }
+    }
+
+    threads foreach { t => t.start() }
+    Thread.sleep(200)
+    val everything = q.getAll
+    assert(everything.size == capacity)
+    Thread.sleep(200)
+    val everything2 = q.getAll
     assert(
-      q.getSize == 0,
-      s"the queue should be empty after ${n_threads / 2} enqueues and dequeues"
+      everything2.size == capacity,
+      "threads waiting to enqueue events are not woken up"
     )
+    threads foreach { t => assert(!t.isAlive()) }
   }
 
 }
