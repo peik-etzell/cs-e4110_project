@@ -9,14 +9,26 @@ import scala.collection.mutable.Queue
 
 class Semaphore(private var permits: Int) {
 
+  @throws[InterruptedException]
   def acquire(): Unit = synchronized {
     while (permits == 0) { wait() }
     permits -= 1
   }
 
+  def acquireAll(): Int = synchronized {
+    val n = permits
+    permits = 0
+    n
+  }
+
   def release(): Unit = synchronized {
     permits += 1
     notify()
+  }
+
+  def releaseMany(n: Int): Unit = synchronized {
+    permits += n
+    notifyAll()
   }
 
   def availablePermits(): Int = synchronized { permits }
@@ -55,9 +67,14 @@ final class BlockingEventQueue[T](private val capacity: Int) {
     return e
   }
 
-  // TODO has to incr./decr./dequeue everything
+  @throws[InterruptedException]
   def getAll: Seq[Event[T]] = {
-    ???
+    val n = elementsSem.acquireAll()
+    mutationLock.acquire()
+    val elems = queue.dequeueAll(_ => true)
+    mutationLock.release()
+    emptySlotsSem.releaseMany(n)
+    return elems
   }
 
   def getSize: Int = { synchronized { queue.size } }
