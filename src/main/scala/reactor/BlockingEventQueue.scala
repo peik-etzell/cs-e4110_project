@@ -34,9 +34,8 @@ class Semaphore(private var permits: Int) {
   // Method to release multiple permits at once
   def releaseMany(n: Int): Unit = synchronized {
     permits += n
-    // Has to notify all waiting threads
-    // (could kind of notify n waiting threads but whatever, good enough)
-    notifyAll()
+    // Has to notify at least n waiting threads
+    (0 to n) foreach { _ => notify() }
   }
 
   // Method to get the number of available permits
