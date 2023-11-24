@@ -100,7 +100,7 @@ class QueueSemanticsTest extends AnyFunSuite with TimeLimitedTests {
     threads.foreach(t => t.join(500))
     val expected = numEnqueue - numDequeue
     assert(q.getSize == expected)
-    threads foreach { t => assert(!t.isAlive()) }
+    assert(threads forall { t => !t.isAlive() })
   }
 
   test("a getAll call correctly wakes up waiting threads") {
@@ -121,7 +121,7 @@ class QueueSemanticsTest extends AnyFunSuite with TimeLimitedTests {
       everything2.size == capacity,
       "threads waiting to enqueue events are not woken up"
     )
-    threads foreach { t => assert(!t.isAlive()) }
+    assert(threads forall { t => !t.isAlive() })
   }
 
 }
