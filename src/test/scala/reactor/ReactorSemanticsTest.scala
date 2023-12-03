@@ -127,4 +127,21 @@ class ReactorSemanticsTest extends AnyFunSuite with TimeLimitedTests {
     assertResult(c2.content) { c2.received }
   }
 
+  test("a cancellation should cancel") {
+    val d = new Dispatcher(1)
+
+    val c1 = new TestContext(d)
+    val c2 = new TestContext(d)
+
+    d.addHandler(c1.handler)
+    d.addHandler(c2.handler)
+
+    d.removeHandler(c1.handler)
+
+    d.handleEvents()
+
+    assertResult("") { c1.received }
+    assertResult(c2.content) { c2.received }
+  }
+
 }
