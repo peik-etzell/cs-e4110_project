@@ -29,7 +29,7 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
 
   private def guess(c: Char, guesser: String) = {
     state = state.makeGuess(c)
-    playerHandlers foreach {
+    playerHandlers filter { _.registered } foreach {
       _ << s"${c} ${state.getMaskedWord} ${state.guessCount} ${guesser}"
     }
     if (state.isGameOver) { stop() }
@@ -54,7 +54,9 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
 
     override def getHandle: Handle[Socket] = { handle }
     override def handleEvent(evt: Socket): Unit = {
-      dispatcher.addHandler(new PlayerHandler(evt))
+      val p = new PlayerHandler(evt)
+      playerHandlers += p
+      dispatcher.addHandler(p)
     }
   }
 
@@ -62,26 +64,28 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
     private val handle = new TCPTextHandle(socket)
     private var nameOption: Option[String] = None
 
-    def close() = {
+    def close(): Unit = {
       try { socket.close(); }
       catch { case _: Throwable => }
     }
 
-    def <<(msg: String) = {
+    def <<(msg: String): Unit = {
       handle.write(msg)
     }
+
+    def registered: Boolean = { nameOption.isDefined }
 
     override def getHandle: Handle[String] = { handle }
     override def handleEvent(evt: String): Unit = {
       // Is player registered yet?
       nameOption match {
-        // No => register player
+        // No => msg is the player name
         case None => {
           nameOption = Some(evt)
           playerHandlers += this
           handle.write(state.getMaskedWord)
         }
-        // Yes => try to play guess, notify players
+        // Yes => msg is a guess
         case Some(name) => {
           evt.headOption match {
             case Some(char) => guess(char, name)
