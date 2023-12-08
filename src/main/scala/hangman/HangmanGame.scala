@@ -1,6 +1,6 @@
-// group 1
-// 123456 Firstname Lastname
-// 654321 Firstname Lastname
+// group 13
+// 793317 Peik Etzell
+// 100701063 Christian Häggblom
 
 package hangman
 
