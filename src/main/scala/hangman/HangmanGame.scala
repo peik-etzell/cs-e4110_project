@@ -9,52 +9,97 @@ import reactor.Dispatcher
 import hangman.util.AcceptHandle
 import hangman.util.TCPTextHandle
 import java.net.Socket
+import scala.collection.mutable.HashSet
 
 class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
   require(hiddenWord != null && hiddenWord.length > 0)
   require(initialGuessCount > 0)
 
+  private val dispatcher = new Dispatcher()
+  private val socketHandler = new SocketHandler()
+  private val playerHandlers = new HashSet[PlayerHandler]
+
   private var state =
     new GameState(hiddenWord, initialGuessCount, Set.empty[Char])
 
-  def guess(guess: Char) = {
-    state = state.makeGuess(guess)
+  def start() = {
+    dispatcher.addHandler(socketHandler)
+    dispatcher.handleEvents()
+  }
+
+  private def guess(c: Char, guesser: String) = {
+    state = state.makeGuess(c)
+    playerHandlers foreach {
+      _ << s"${c} ${state.getMaskedWord} ${state.guessCount} ${guesser}"
+    }
+    if (state.isGameOver) { stop() }
+  }
+
+  private def stop() = {
+    playerHandlers foreach { p =>
+      dispatcher.removeHandler(p)
+      p.close()
+    }
+    dispatcher.removeHandler(socketHandler)
+    socketHandler.close()
+  }
+
+  private class SocketHandler() extends EventHandler[Socket] {
+    private val handle = new AcceptHandle()
+
+    def close() = {
+      try { handle.close(); }
+      catch { case _: Throwable => }
+    }
+
+    override def getHandle: Handle[Socket] = { handle }
+    override def handleEvent(evt: Socket): Unit = {
+      dispatcher.addHandler(new PlayerHandler(evt))
+    }
+  }
+
+  private class PlayerHandler(socket: Socket) extends EventHandler[String] {
+    val handle = new TCPTextHandle(socket)
+    private var nameOption: Option[String] = None
+
+    def close() = {
+      try { socket.close(); }
+      catch { case _: Throwable => }
+    }
+
+    def <<(msg: String) = {
+      handle.write(msg)
+    }
+
+    override def getHandle: Handle[String] = { handle }
+    override def handleEvent(evt: String): Unit = {
+      // Is player registered yet?
+      nameOption match {
+        // No => register player
+        case None => {
+          nameOption = Some(evt)
+          playerHandlers += this
+          handle.write(state.getMaskedWord)
+        }
+        // Yes => try to play guess, notify players
+        case Some(name) => {
+          evt.headOption match {
+            case Some(char) => guess(char, name)
+            case None       =>
+          }
+        }
+      }
+    }
   }
 }
 
 object HangmanGame {
-  private val dispatcher = new Dispatcher()
 
   def main(args: Array[String]): Unit = {
     val word: String = args(0) // first program argument
     val guessCount: Int = args(1).toInt // second program argument
-
-    // Optionally, pass port number as command line parameter
-    val port =
-      if (args.length >= 3) {
-        args.lastOption.flatMap(s => s.toIntOption)
-      } else None
-
-    dispatcher.addHandler(new NewConnectionHandler)
-    dispatcher.handleEvents()
-
     val game: HangmanGame = new HangmanGame(word, guessCount)
-  }
 
-  class NewConnectionHandler extends EventHandler[Socket] {
-    private val handle = new AcceptHandle
-    override def getHandle: Handle[Socket] = { handle }
-    override def handleEvent(evt: Socket): Unit = {
-      println("New connection")
-      dispatcher.addHandler(new ClientHandler(evt))
-    }
-  }
-
-  class ClientHandler(socket: Socket) extends EventHandler[String] {
-    private val handle = new TCPTextHandle(socket)
-    override def getHandle: Handle[String] = { handle }
-    override def handleEvent(evt: String): Unit = {
-      println(s"Got event: '${evt}'")
-    }
+    game.start()
   }
 }
