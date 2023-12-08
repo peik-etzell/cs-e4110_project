@@ -59,7 +59,7 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
   }
 
   private class PlayerHandler(socket: Socket) extends EventHandler[String] {
-    val handle = new TCPTextHandle(socket)
+    private val handle = new TCPTextHandle(socket)
     private var nameOption: Option[String] = None
 
     def close() = {
