@@ -10,6 +10,45 @@ import hangman.util.AcceptHandle
 import hangman.util.TCPTextHandle
 import java.net.Socket
 import scala.collection.mutable.HashSet
+/**
+ * Hangman Game: Documentation
+ *
+ * The Hangman server utilizes a single-threaded Reactor pattern for managing concurrency, 
+ * specifically designed to handle multiple client interactions and network events efficiently 
+ * without the complexity of multi-threading or synchronization.
+ *
+ * 1. Dispatcher Role:
+ *    - The 'Dispatcher' class is the central point in the Reactor pattern implementation.
+ *    - It manages a queue of events and dispatches them to the appropriate handlers.
+ *    - This design simplifies the concurrency model, as the dispatcher serially processes events in the main thread.
+ *
+ * 2. EventHandler Abstraction:
+ *    - `SocketHandler` and `PlayerHandler` are implementations of the `EventHandler`.
+ *    - `SocketHandler` deals with incoming socket connections. It accepts new connections and creates a new `PlayerHandler` for each player.
+ *    - `PlayerHandler` manages player interactions, including receiving guesses and sending game state updates.
+ *    - This separation of concerns keeps the code modular and maintainable.
+ *
+ * 3. Single-Threaded Event Processing:
+ *    - Both `SocketHandler` and `PlayerHandler` process events in a non-blocking manner.
+ *    - The main thread, via the dispatcher, invokes handlers' `handleEvent` method, ensuring all event processing happens in a single thread.
+ *    - This approach aligns with the requirement of avoiding direct multi-threading or synchronization mechanisms in the Hangman package.
+ *
+ * 4. Game State Management:
+ *    - A shared `GameState` object is used to track the current state of the game, including the hidden word, remaining guesses, and guessed letters.
+ *    - `GameState` updates happen in the `guess` method of `HangmanGame`, triggered by player actions, ensuring thread safety as it's accessed only in the main thread.
+ *
+ * 5. Network Communication:
+ *    - Network communication is handled using TCP sockets, with `TCPTextHandle` managing the sending and receiving of messages.
+ *    - Each `PlayerHandler` has a `TCPTextHandle` instance, isolating network operations at the player level.
+ *
+ * 6. Clean Resource Management:
+ *    - The `stop` method in `HangmanGame` ensures clean termination of the game.
+ *    - It closes all player handlers and the socket handler, releasing network resources gracefully.
+ *    - This method is invoked once the game ends, either by guessing the word correctly or exhausting all attempts.
+ *
+ * This design, centered around the Reactor pattern with a dispatcher and event handlers, effectively manages concurrency in the Hangman game server. 
+ * It ensures responsive handling of multiple client connections and game events, within the constraints of a single-threaded application environment.
+ */
 
 class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
   require(hiddenWord != null && hiddenWord.length > 0)
