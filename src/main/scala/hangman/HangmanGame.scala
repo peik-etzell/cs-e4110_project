@@ -60,11 +60,14 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
   private var state =
     new GameState(hiddenWord, initialGuessCount, Set.empty[Char])
 
+  // Initializes and starts the dispatcher.
   def start() = {
     dispatcher.addHandler(SocketHandler)
     dispatcher.handleEvents()
   }
 
+  // Changes the internal state, outputs the new status, then checks if
+  // the game should exit.
   private def guess(c: Char, guesser: String) = {
     state = state.makeGuess(c)
     playerHandlers filter { _.registered } foreach {
@@ -73,6 +76,8 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
     if (state.isGameOver) { stop() }
   }
 
+  // To get a clean exit, we need to remove all handlers from the dipatcher.
+  // The dispatcher then exits, as the underlying handlers return on their closes().
   private def stop() = {
     playerHandlers foreach { p =>
       dispatcher.removeHandler(p)
@@ -82,9 +87,14 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
     SocketHandler.close()
   }
 
+  // Singleton object that enables new players to join the game.
+  // When a player connects to the port, a new PlayerHandler is created to
+  // communicate with the player.
   private object SocketHandler extends EventHandler[Socket] {
     private val handle = new AcceptHandle()
 
+    // Closes the handle, which closes its socket,
+    // which makes handle.read() return null.
     def close() = {
       try { handle.close(); }
       catch { case _: Throwable => }
@@ -98,10 +108,14 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
     }
   }
 
+  // Object that keeps a connection to a single player. Handles all input from
+  // the player, only outputs to the player after registration, otherwise
+  // the HangmanGame.guess() method outputs the status updates to all players.
   private class PlayerHandler(socket: Socket) extends EventHandler[String] {
     private val handle = new TCPTextHandle(socket)
     private var nameOption: Option[String] = None
 
+    // Closes the socket, which makes handle.read() return null.
     def close(): Unit = {
       try { socket.close(); }
       catch { case _: Throwable => }
@@ -135,6 +149,7 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
   }
 }
 
+// Only starts a new HangmanGame, which finishes when the game is over.
 object HangmanGame {
 
   def main(args: Array[String]): Unit = {
