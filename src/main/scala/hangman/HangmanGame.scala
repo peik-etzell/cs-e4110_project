@@ -135,7 +135,7 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
         case None => {
           nameOption = Some(evt)
           playerHandlers += this
-          handle.write(state.getMaskedWord)
+          this << s"${state.getMaskedWord} ${state.guessCount}"
         }
         // Yes => msg is a guess
         case Some(name) => {
