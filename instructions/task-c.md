@@ -48,7 +48,7 @@ Use terminal applications, such as `telnet` and `netcat`, to connect to the Hang
 
 ## Additional Requirements
 
-Don't use any custom methods or classes of your Reactor implementation. You may only use the methods defined in the the Reactor specification. Your Hangman code must not depend on your Reactor code, and your Hangman code must work with any Reactor which implements the specification.
+Don't use any custom methods or classes of your Reactor implementation. You may only use the methods defined in the Reactor specification. Your Hangman code must not depend on your Reactor code, and your Hangman code must work with any Reactor which implements the specification.
 
 Your Hangman application must exit cleanly. Having to use `System.exit()` or a comparable method, that terminates the entire JVM, is a sign of implementation problems. Do not use daemon threads to circumvent this requirement.
 
