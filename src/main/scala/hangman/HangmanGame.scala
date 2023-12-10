@@ -55,14 +55,13 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
   require(initialGuessCount > 0)
 
   private val dispatcher = new Dispatcher()
-  private val socketHandler = new SocketHandler()
   private val playerHandlers = new HashSet[PlayerHandler]
 
   private var state =
     new GameState(hiddenWord, initialGuessCount, Set.empty[Char])
 
   def start() = {
-    dispatcher.addHandler(socketHandler)
+    dispatcher.addHandler(SocketHandler)
     dispatcher.handleEvents()
   }
 
@@ -79,11 +78,11 @@ class HangmanGame(val hiddenWord: String, val initialGuessCount: Int) {
       dispatcher.removeHandler(p)
       p.close()
     }
-    dispatcher.removeHandler(socketHandler)
-    socketHandler.close()
+    dispatcher.removeHandler(SocketHandler)
+    SocketHandler.close()
   }
 
-  private class SocketHandler() extends EventHandler[Socket] {
+  private object SocketHandler extends EventHandler[Socket] {
     private val handle = new AcceptHandle()
 
     def close() = {
